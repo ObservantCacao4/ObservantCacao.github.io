@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Événements tactiles et orientation</title>
+    <style>
+        .touch-box {
+            width: 200px;
+            height: 200px;
+            margin: 20px;
+            background-color: lightgray;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            border-radius: 10px;
+            text-align: center;
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Exemples d'événements tactiles et orientation</h1>
+    <div id="touchstart-box" class="touch-box">Touchstart</div>
+    <div id="touchend-box" class="touch-box">Touchend</div>
+    <div id="doubletap-box" class="touch-box">Double Tap</div>
+    <div id="longpress-box" class="touch-box">Long Press</div>
+    <div id="orientation-box" class="touch-box">Orientation</div>
+    <script>
+        document.getElementById("touchstart-box").addEventListener("touchstart", () => {
+            a = document.getElementById("touchstart-box");
+            a.innerHTML = "touché"
+            a.style.backgroundColor = "coral";
+        });
+        document.getElementById("touchend-box").addEventListener("touchend", () => {
+            a = document.getElementById("touchend-box");
+            a.innerHTML = "fin de touché";
+            a.style.backgroundColor = "coral";
+        });
+
+        memoire = 0;
+        document.getElementById("doubletap-box").addEventListener("touchend", () => {
+            a = document.getElementById("doubletap-box");
+            const mtn = new Date().getTime();
+            if (mtn - memoire < 300) {
+                a.style.backgroundColor = "coral";
+                a.innerHTML = "double touché";
+            }
+            memoire = mtn;
+        });
+        timer = 0;
+        document.getElementById("longpress-box").addEventListener("touchstart", () => {
+            a = document.getElementById("longpress-box");
+            timer = setTimeout(() => {
+                a.style.backgroundColor = "coral";
+                a.innerHTML = "long touché";
+            }, 500);
+
+            
+        });
+        document.getElementById("longpress-box").addEventListener("touchend", () => {
+            clearTimeout(timer);
+        });
+
+        window.addEventListener("orientationchange", (event) => {
+            a = document.getElementById("orientation-box");
+            a.style.backgroundColor = "coral";
+            a.innerHTML = `l'orientation de votre outil est ${event.target.screen.orientation.angle}`;
+        });
+    </script>
+</body>
+
+</html>
