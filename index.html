@@ -38,14 +38,21 @@
             </div>
         </div>
     </div>
-    
+
     <div id="pagePokemon" class="container mt-4">
         <h2>Liste des pokemon </h2>
         <div id="pokemonC" class="pokemon-grid mt-4"></div>
     </div>
-    
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="bootstrap.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("service-worker.js")
+                .then(() => console.log("Service Worker registered successfully"))
+                .catch(error => console.error("Service Worker registration failed:", error));
+        }
+    </script>
     <script>
         let btnPageMap = document.getElementById("btnPageMap");
         let btnPagePokemon = document.getElementById("btnPagePokemon");
@@ -56,21 +63,21 @@
             pm.style.display = "block";
             pp.style.display = "none";
         })
-        
+
         btnPagePokemon.addEventListener("click", function () {
             pp.innerHTML = "";
             pp.style.display = "block";
             pm.style.display = "none";
             AfficherPokeon();
         });
-        
+
         async function AfficherPokeon() {
             console.log(localStorage.getItem['pokemons'])
             const pagePokemon = document.getElementById("pagePokemon");
-        
+
             // Nettoyer l'ancien contenu
             pagePokemon.innerHTML = "";
-        
+
             // Parcourir les Pokémon et créer des cartes pour chacun
             Pokemonser.forEach(pokemon => {
                 console.log(pokemon.pokedex_id);
@@ -79,7 +86,7 @@
                 const card = document.createElement("div");
                 card.className = "pokemon-card";
                 //card.style.maxWidth = "540px";
-        
+
                 card.innerHTML = `
                     <div class="row g-0">
                         <div class="col-md-4">
@@ -94,32 +101,32 @@
                         </div>
                     </div>
                 `;
-        
+
                 // Ajouter la carte dans le conteneur
                 pagePokemon.appendChild(card);
             });
-        
+
         }
-        
+
         function generateRandomPosition() {
             const bounds = map.getBounds(); // Limites de la carte
             const lat = bounds.getSouthWest().lat + (Math.random() * (bounds.getNorthEast().lat - bounds.getSouthWest().lat));
             const lng = bounds.getSouthWest().lng + (Math.random() * (bounds.getNorthEast().lng - bounds.getSouthWest().lng));
             return [lat, lng];
         }
-        
+
         function spawnPokemonRandom() {
             if (!Pokemonser.length) {
                 console.error("La liste des Pokémon n'est pas chargée !");
                 return;
             }
-        
+
             // Sélectionner un Pokémon aléatoire
             const randomPokemon = Pokemonser[Math.floor(Math.random() * Pokemonser.length)];
-        
+
             // Générer une position aléatoire
             const randomPosition = generateRandomPosition();
-        
+
             // Ajouter un marqueur sur la carte
             const marker = L.marker(randomPosition, {
                 icon: L.icon({
@@ -127,14 +134,14 @@
                     iconSize: [39, 39], // Taille de l'icône
                 }),
             }).addTo(map);
-        
+
             // Ajouter un popup au marqueur
             marker.bindPopup(`
         <b>${randomPokemon.name.fr}</b>
         <p>ID: ${randomPokemon.pokedex_id}</p>
         <button id="capture-${randomPokemon.pokedex_id}" class="btn btn-primary btn-sm">Capturer</button>
         `);
-        
+
             // Ajouter un événement de clic sur le marqueur
             marker.on('popupopen', () => {
                 const captureButton = document.getElementById(`capture-${randomPokemon.pokedex_id}`);
@@ -146,37 +153,37 @@
                 }
             });
         }
-        
+
         function addToLocalStorage(pokemon) {
-        const storedData = JSON.parse(localStorage.getItem("pokemons")) || {};
-        
-        if (storedData[pokemon.pokedex_id]) {
-        // Si le Pokémon existe déjà, incrémenter le compteur
-        storedData[pokemon.pokedex_id].count += 1;
-        } else {
-        // Ajouter un nouveau Pokémon
-        storedData[pokemon.pokedex_id] = {
-            name: pokemon.name.fr,
-            count: 1,
-        };
-        }
-        
-        // Mettre à jour le localStorage
-        localStorage.setItem("pokemons", JSON.stringify(storedData));
-        
-        console.log(`${pokemon.name.fr} capturé !`);
-        console.log("Données du localStorage :", storedData);
+            const storedData = JSON.parse(localStorage.getItem("pokemons")) || {};
+
+            if (storedData[pokemon.pokedex_id]) {
+                // Si le Pokémon existe déjà, incrémenter le compteur
+                storedData[pokemon.pokedex_id].count += 1;
+            } else {
+                // Ajouter un nouveau Pokémon
+                storedData[pokemon.pokedex_id] = {
+                    name: pokemon.name.fr,
+                    count: 1,
+                };
+            }
+
+            // Mettre à jour le localStorage
+            localStorage.setItem("pokemons", JSON.stringify(storedData));
+
+            console.log(`${pokemon.name.fr} capturé !`);
+            console.log("Données du localStorage :", storedData);
         }
 
-        async function obtenirInfo(){
-            
+        async function obtenirInfo() {
+
             const url = "https://tyradex.app/api/v1/pokemon";
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`Erreur : ${response.status}`);
                 }
-                
+
                 const pokemons = await response.json();
                 Pokemonser = pokemons;
             } catch (error) {
@@ -186,7 +193,7 @@
 
 
         let Pokemonser = []
-        
+
         obtenirInfo().then(spawnPokemonRandom);
 
 
@@ -207,7 +214,7 @@
 
                 // Centrer la carte sur la position utilisateur
                 map.setView(userCoords, 13);
-                
+
             }, error => {
                 // Gestion des erreurs de géolocalisation
                 alert("Impossible d'obtenir votre position.");
