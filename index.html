@@ -3,73 +3,223 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Événements tactiles et orientation</title>
+    <title>pokemon</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="bootstrap.css">
     <style>
-        .touch-box {
-            width: 200px;
-            height: 200px;
-            margin: 20px;
-            background-color: lightgray;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            border-radius: 10px;
-            text-align: center;
-            user-select: none;
+        #map {
+            height: 500px;
+        }
+
+        #list {
+            margin-top: 10px;
+            font-family: Arial, sans-serif;
+        }
+
+        #pagePokemon {
+            display: none;
         }
     </style>
 </head>
 
 <body>
-    <h1>Exemples d'événements tactiles et orientation</h1>
-    <div id="touchstart-box" class="touch-box">Touchstart</div>
-    <div id="touchend-box" class="touch-box">Touchend</div>
-    <div id="doubletap-box" class="touch-box">Double Tap</div>
-    <div id="longpress-box" class="touch-box">Long Press</div>
-    <div id="orientation-box" class="touch-box">Orientation</div>
+    <nav class="sticky-top bg-body-tertiary">
+        <button type="button" class="btn btn-dark" id="btnPageMap">Page Avec la map</button>
+        <button type="button" class="btn btn-dark" id="btnPagePokemon">Pokedex</button>
+    </nav>
+    <div id="pageMap">
+        <h2>Carte pokemon à Genève</h2>
+        <div id="map"></div>
+        <div id="list" class="d-flex justify-content-center">
+            <button class="btn btn-success" onclick="spawnPokemonRandom()">Faire apparaitre un pokemon</button>
+            <div id="historique">
+
+            </div>
+        </div>
+    </div>
+    
+    <div id="pagePokemon" class="container mt-4">
+        <h2>Liste des pokemon </h2>
+        <div id="pokemonC" class="pokemon-grid mt-4"></div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="bootstrap.js"></script>
     <script>
-        document.getElementById("touchstart-box").addEventListener("touchstart", () => {
-            a = document.getElementById("touchstart-box");
-            a.innerHTML = "touché"
-            a.style.backgroundColor = "coral";
-        });
-        document.getElementById("touchend-box").addEventListener("touchend", () => {
-            a = document.getElementById("touchend-box");
-            a.innerHTML = "fin de touché";
-            a.style.backgroundColor = "coral";
-        });
+        let btnPageMap = document.getElementById("btnPageMap");
+        let btnPagePokemon = document.getElementById("btnPagePokemon");
+        let pm = document.getElementById("pageMap");
+        let pp = document.getElementById("pagePokemon");
 
-        memoire = 0;
-        document.getElementById("doubletap-box").addEventListener("touchend", () => {
-            a = document.getElementById("doubletap-box");
-            const mtn = new Date().getTime();
-            if (mtn - memoire < 300) {
-                a.style.backgroundColor = "coral";
-                a.innerHTML = "double touché";
+        btnPageMap.addEventListener("click", function () {
+            pm.style.display = "block";
+            pp.style.display = "none";
+        })
+        
+        btnPagePokemon.addEventListener("click", function () {
+            pp.innerHTML = "";
+            pp.style.display = "block";
+            pm.style.display = "none";
+            AfficherPokeon();
+        });
+        
+        async function AfficherPokeon() {
+            console.log(localStorage.getItem['pokemons'])
+            const pagePokemon = document.getElementById("pagePokemon");
+        
+            // Nettoyer l'ancien contenu
+            pagePokemon.innerHTML = "";
+        
+            // Parcourir les Pokémon et créer des cartes pour chacun
+            Pokemonser.forEach(pokemon => {
+                console.log(pokemon.pokedex_id);
+                console.log();
+
+                const card = document.createElement("div");
+                card.className = "pokemon-card";
+                //card.style.maxWidth = "540px";
+        
+                card.innerHTML = `
+                    <div class="row g-0">
+                        <div class="col-md-4">
+                            <img src="${pokemon.sprites.regular}" class="img-fluid rounded-start" alt="${pokemon.name}">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title">${pokemon.name.fr}</h5>
+                                <p class="card-text">${JSON.parse(localStorage.getItem("pokemons"))[pokemon.pokedex_id] ? `vous en avez capturé ${JSON.parse(localStorage.getItem("pokemons"))[pokemon.pokedex_id].count}` : "Aucun Capturer..."}</p>
+                                <p class="card-text"><small class="text-body-secondary">ID: ${pokemon.pokedex_id}</small></p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        
+                // Ajouter la carte dans le conteneur
+                pagePokemon.appendChild(card);
+            });
+        
+        }
+        
+        function generateRandomPosition() {
+            const bounds = map.getBounds(); // Limites de la carte
+            const lat = bounds.getSouthWest().lat + (Math.random() * (bounds.getNorthEast().lat - bounds.getSouthWest().lat));
+            const lng = bounds.getSouthWest().lng + (Math.random() * (bounds.getNorthEast().lng - bounds.getSouthWest().lng));
+            return [lat, lng];
+        }
+        
+        function spawnPokemonRandom() {
+            if (!Pokemonser.length) {
+                console.error("La liste des Pokémon n'est pas chargée !");
+                return;
             }
-            memoire = mtn;
-        });
-        timer = 0;
-        document.getElementById("longpress-box").addEventListener("touchstart", () => {
-            a = document.getElementById("longpress-box");
-            timer = setTimeout(() => {
-                a.style.backgroundColor = "coral";
-                a.innerHTML = "long touché";
-            }, 500);
+        
+            // Sélectionner un Pokémon aléatoire
+            const randomPokemon = Pokemonser[Math.floor(Math.random() * Pokemonser.length)];
+        
+            // Générer une position aléatoire
+            const randomPosition = generateRandomPosition();
+        
+            // Ajouter un marqueur sur la carte
+            const marker = L.marker(randomPosition, {
+                icon: L.icon({
+                    iconUrl: randomPokemon.sprites.regular,
+                    iconSize: [39, 39], // Taille de l'icône
+                }),
+            }).addTo(map);
+        
+            // Ajouter un popup au marqueur
+            marker.bindPopup(`
+        <b>${randomPokemon.name.fr}</b>
+        <p>ID: ${randomPokemon.pokedex_id}</p>
+        <button id="capture-${randomPokemon.pokedex_id}" class="btn btn-primary btn-sm">Capturer</button>
+        `);
+        
+            // Ajouter un événement de clic sur le marqueur
+            marker.on('popupopen', () => {
+                const captureButton = document.getElementById(`capture-${randomPokemon.pokedex_id}`);
+                if (captureButton) {
+                    captureButton.addEventListener('click', () => {
+                        addToLocalStorage(randomPokemon);
+                        marker.remove();
+                    });
+                }
+            });
+        }
+        
+        function addToLocalStorage(pokemon) {
+        const storedData = JSON.parse(localStorage.getItem("pokemons")) || {};
+        
+        if (storedData[pokemon.pokedex_id]) {
+        // Si le Pokémon existe déjà, incrémenter le compteur
+        storedData[pokemon.pokedex_id].count += 1;
+        } else {
+        // Ajouter un nouveau Pokémon
+        storedData[pokemon.pokedex_id] = {
+            name: pokemon.name.fr,
+            count: 1,
+        };
+        }
+        
+        // Mettre à jour le localStorage
+        localStorage.setItem("pokemons", JSON.stringify(storedData));
+        
+        console.log(`${pokemon.name.fr} capturé !`);
+        console.log("Données du localStorage :", storedData);
+        }
 
+        async function obtenirInfo(){
             
-        });
-        document.getElementById("longpress-box").addEventListener("touchend", () => {
-            clearTimeout(timer);
-        });
+            const url = "https://tyradex.app/api/v1/pokemon";
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur : ${response.status}`);
+                }
+                
+                const pokemons = await response.json();
+                Pokemonser = pokemons;
+            } catch (error) {
+                console.error("Erreur lors de la récupération des Pokémon :", error.message);
+            }
+        }
 
-        window.addEventListener("orientationchange", (event) => {
-            a = document.getElementById("orientation-box");
-            a.style.backgroundColor = "coral";
-            a.innerHTML = `l'orientation de votre outil est ${event.target.screen.orientation.angle}`;
-        });
+
+        let Pokemonser = []
+        
+        obtenirInfo().then(spawnPokemonRandom);
+
+
+        const map = L.map('map').setView([46.2044, 6.1432], 12);
+
+        if (true) {
+            navigator.geolocation.getCurrentPosition(position => {
+                // Géolocalisation réussie
+                const userCoords = [position.coords.latitude, position.coords.longitude];
+
+                // Ajout du marqueur pour la position utilisateur
+                L.marker(userCoords, {
+                    icon: L.icon({
+                        iconUrl: 'justAChillGuyIKnow.png',
+                        iconSize: [25, 25]
+                    })
+                }).addTo(map).bindPopup("Vous êtes ici").openPopup();
+
+                // Centrer la carte sur la position utilisateur
+                map.setView(userCoords, 13);
+                
+            }, error => {
+                // Gestion des erreurs de géolocalisation
+                alert("Impossible d'obtenir votre position.");
+            });
+        } else {
+            alert("La géolocalisation n'est pas supportée par ce navigateur.");
+        }
+
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            maxZoom: 200,
+            attribution: '...'
+        }).addTo(map);
+
     </script>
 </body>
 
